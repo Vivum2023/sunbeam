@@ -22,14 +22,13 @@ async def on_ready():
 @bot.check
 async def enabled(ctx: commands.Context):
     if ctx.command.name in config.CONFIG.disabled:
-        await ctx.send("This command is disabled.")
         return False
     return True
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: Exception):
     if isinstance(error, commands.CheckFailure):
-        return
+        return await ctx.send("This command is disabled.")
     raise error
 
 @bot.hybrid_command(name="buildserver") 
