@@ -97,8 +97,16 @@ async def buildserver(ctx: commands.Context):
         role = await ctx.guild.create_role(name=name)
 
         cat = await ctx.guild.create_category(name, overwrites={
-            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
-            role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            ctx.guild.default_role: discord.PermissionOverwrite(
+                read_messages=True, 
+                send_messages=False,
+                connect=False
+            ),
+            role: discord.PermissionOverwrite(
+                read_messages=True, 
+                send_messages=True,
+                connect=True
+            ),
         })
         your_dep = await ctx.guild.create_text_channel(f"in-{chan_name}", category=cat, overwrites={
             ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
