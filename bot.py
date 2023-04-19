@@ -51,3 +51,7 @@ class Vivum(commands.Bot):
                     logging.info(f"Failed to load extension {file}: {e}")
 
         logging.info("Ready!")
+
+        await self.tree.sync()
+
+        logging.info("Synced command tree")
