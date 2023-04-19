@@ -3,7 +3,7 @@ import os
 import asyncpg
 import discord
 from discord.ext import commands
-from loguru import logger
+import logging
 from config import Config
 
 class Vivum(commands.Bot):
@@ -18,7 +18,7 @@ class Vivum(commands.Bot):
         )
 
     async def setup_hook(self):
-        logger.info("Called setup_hook")
+        logging.info("Called setup_hook")
 
         self.pool = await asyncpg.create_pool(self.config.database_url)
 
