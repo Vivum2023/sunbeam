@@ -1,8 +1,9 @@
 from discord.ext import commands
 from discord.utils import find
+from bot import Vivum
 
 class Rules(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: Vivum):
         self.bot = bot
     
     @commands.command()
@@ -38,5 +39,5 @@ __**IMPORTANT NOTES**__
 **Have fun, stay organized**
         """, suppress_embeds=True)
 
-async def setup(bot: commands.Bot):
+async def setup(bot: Vivum):
     await bot.add_cog(Rules(bot))
