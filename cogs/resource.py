@@ -35,7 +35,7 @@ class Resource(commands.Cog):
         for id in ids:
             embed = discord.Embed(title=id["name"], description=id["description"])   
             embed.add_field(name="ID", value=id["id"])  
-            embed.add_field("Description", value=id["description"])
+            embed.add_field(name="Description", value=id["description"])
             embed.add_field(name="URL", value=id["url"])
             embeds.append(embed)
         
