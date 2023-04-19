@@ -49,7 +49,13 @@ class Resource(commands.Cog):
         for r in res:
             msg += f"**{r['name']}:**\n*{r['description']}*\n\n{r['url']}\n\n\n"
         
-        await ctx.send(msg)
+        await ctx.send(msg, suppress_embeds=True)
+
+    @resource.command()
+    @commands.has_guild_permissions(administrator=True)
+    async def remove(self, ctx: commands.Context, id: uuid.UUID):
+        await self.bot.pool.execute("DELETE FROM resources WHERE id = $1", id)
+        await ctx.send("Resource removed!")
 
 async def setup(bot: Vivum):
     await bot.add_cog(Resource(bot))
