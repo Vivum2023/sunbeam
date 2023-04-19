@@ -15,7 +15,7 @@ class Vivum(commands.Bot):
         super().__init__(
             command_prefix = config.prefix,
             intents=discord.Intents.all(),
-            activity=discord.CustomActivity('Snoozing kittycats!')
+            activity=discord.Game(name='Having good times with cats!')
         )
 
         if not self.config.disabled:
