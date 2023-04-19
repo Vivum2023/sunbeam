@@ -17,6 +17,9 @@ class Vivum(commands.Bot):
             intents=discord.Intents.all()
         )
 
+        if not self.config.disabled:
+            self.config.disabled = []
+
     async def setup_hook(self):
         logging.info("Called setup_hook")
 
