@@ -17,10 +17,24 @@ async def on_ready():
         await bot.load_extension("jishaku")
     except commands.ExtensionAlreadyLoaded:
         pass
+
+    # For every file in the cogs folder, load it
+    for file in os.listdir("cogs"):
+        if file.endswith(".py"):
+            try:
+                print(f"Loading extension {file}...")
+                await bot.load_extension(f"cogs.{file[:-3]}")
+            except commands.ExtensionAlreadyLoaded:
+                pass
+            except Exception as e:
+                print(f"Failed to load extension {file}: {e}")
+
     print("Ready!")
 
 @bot.check
 async def enabled(ctx: commands.Context):
+    if not config.CONFIG.disabled:
+        return True
     if ctx.command.name in config.CONFIG.disabled:
         return False
     return True
