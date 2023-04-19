@@ -5,7 +5,7 @@ from discord.ext import commands
 import config as config
 import logging 
 
-logging.getLogger().setLevel(logging.INFO)
+discord.utils.setup_logging(root=True)
 
 yaml = ruamel.yaml.YAML()
 
@@ -138,4 +138,4 @@ async def buildserver(ctx: commands.Context):
             ctx.guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
         })
 
-bot.run(config.CONFIG.token)
+bot.run(config.CONFIG.token, log_handler=None)
