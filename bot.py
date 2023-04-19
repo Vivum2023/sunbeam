@@ -14,7 +14,8 @@ class Vivum(commands.Bot):
         self.config = config
         super().__init__(
             command_prefix = config.prefix,
-            intents=discord.Intents.all()
+            intents=discord.Intents.all(),
+            activity=discord.Game(name='with kittycats!')
         )
 
         if not self.config.disabled:
@@ -50,8 +51,11 @@ class Vivum(commands.Bot):
                 except Exception as e:
                     logging.info(f"Failed to load extension {file}: {e}")
 
-        logging.info("Ready!")
+        logging.info("Bot setup complete!")
 
         await self.tree.sync()
 
         logging.info("Synced command tree")
+    
+    async def on_ready(self):
+        logging.info("on_ready called")
