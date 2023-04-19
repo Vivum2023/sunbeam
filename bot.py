@@ -25,6 +25,15 @@ class Vivum(commands.Bot):
 
         self.pool = await asyncpg.create_pool(self.config.database_url)
 
+        await self.pool.execute("""
+            CREATE TABLE IF NOT EXISTS resources (
+                id UUID PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                url TEXT NOT NULL
+            )
+        """)
+
         try:
             await self.load_extension("jishaku")
         except commands.ExtensionAlreadyLoaded:
