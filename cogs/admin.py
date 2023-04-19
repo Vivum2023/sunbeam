@@ -38,7 +38,8 @@ class Admin(commands.Cog):
             "sudo",
             "admin",
             "tech support",
-            "everyone"
+            "everyone",
+            "vc"
         ]
 
         # Delete all channels not in protected_cats
