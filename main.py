@@ -17,7 +17,7 @@ bot = Vivum(cfg)
 async def enabled(ctx: commands.Context):
     if not bot.config.disabled:
         return True
-    if ctx.command.name in config.CONFIG.disabled:
+    if ctx.command.name in bot.config.disabled:
         return False
     return True
 
