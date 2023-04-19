@@ -1,3 +1,4 @@
 jishaku
 ruamel.yaml
 pydantic
+asyncpg
