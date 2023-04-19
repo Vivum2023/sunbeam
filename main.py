@@ -3,6 +3,9 @@ import ruamel.yaml
 import discord
 from discord.ext import commands
 import config as config
+import logging 
+
+logging.getLogger().setLevel(logging.INFO)
 
 yaml = ruamel.yaml.YAML()
 
@@ -22,14 +25,14 @@ async def on_ready():
     for file in os.listdir("cogs"):
         if file.endswith(".py"):
             try:
-                print(f"Loading extension {file}...")
+                logging.info(f"Loading extension {file}...")
                 await bot.load_extension(f"cogs.{file[:-3]}")
             except commands.ExtensionAlreadyLoaded:
                 pass
             except Exception as e:
-                print(f"Failed to load extension {file}: {e}")
+                logging.info(f"Failed to load extension {file}: {e}")
 
-    print("Ready!")
+    logging.info("Ready!")
 
 @bot.check
 async def enabled(ctx: commands.Context):
