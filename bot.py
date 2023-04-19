@@ -15,7 +15,7 @@ class Vivum(commands.Bot):
         super().__init__(
             command_prefix = config.prefix,
             intents=discord.Intents.all(),
-            activity=discord.Game(name='Having good times with cats!')
+            activity=discord.Game(name="cats")
         )
 
         if not self.config.disabled:
@@ -59,3 +59,4 @@ class Vivum(commands.Bot):
     
     async def on_ready(self):
         logging.info("on_ready called")
+
