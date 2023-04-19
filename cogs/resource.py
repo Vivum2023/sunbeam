@@ -45,7 +45,7 @@ class Resource(commands.Cog):
     async def list(self, ctx: commands.Context):
         res = await self.bot.pool.fetch("SELECT name, description, url FROM resources")
 
-        if ctx.prefix:
+        if not ctx.interaction:
             await ctx.message.delete()
 
         msg = ""
