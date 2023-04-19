@@ -53,7 +53,7 @@ class Resource(commands.Cog):
 
     @resource.command()
     @commands.has_guild_permissions(administrator=True)
-    async def remove(self, ctx: commands.Context, id: uuid.UUID):
+    async def remove(self, ctx: commands.Context, id: string):
         await self.bot.pool.execute("DELETE FROM resources WHERE id = $1", id)
         await ctx.send("Resource removed!")
 
