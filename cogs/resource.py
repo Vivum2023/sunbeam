@@ -1,3 +1,4 @@
+import uuid
 import discord
 from discord.ext import commands
 
@@ -14,9 +15,10 @@ class Resource(commands.Cog):
     @resource.command()
     @commands.has_guild_permissions(administrator=True)
     async def add(self, ctx: commands.Context, name: str, description: str, url: str):
+        id = uuid.uuid4()
         await self.bot.pool.execute("""
-            INSERT INTO resources (name, description, url) VALUES ($1, $2, $3)
-        """, name, description, url)
+            INSERT INTO resources (id, name, description, url) VALUES ($1, $2, $3, $4)
+        """, id, name, description, url)
         await ctx.send("Resource added!")
 
 async def setup(bot: Vivum):
