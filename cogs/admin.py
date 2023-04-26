@@ -31,7 +31,8 @@ class Admin(commands.Cog):
 
         protected_cats = [
             "information",
-            "general"
+            "general",
+            "admin"
         ]
 
         protected_roles = [
