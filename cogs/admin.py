@@ -67,14 +67,19 @@ class Admin(commands.Cog):
 
         await ctx.send("**Step 2: Create new roles and channels**")
 
-        await ctx.guild.create_role(name="HOD")
+        hod = await ctx.guild.create_role(name="HOD")
 
         for name, chan_name in chans.items():
             await ctx.send(f"Creating department {name}...")
-            role = await ctx.guild.create_role(name=name)
+            role = await ctx.guild.create_role(name=name, hoist=True)
 
             cat = await ctx.guild.create_category(name, overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(
+                    read_messages=False, 
+                    send_messages=False,
+                    connect=False
+                ),
+                hod: discord.PermissionOverwrite(
                     read_messages=True, 
                     send_messages=False,
                     connect=False
@@ -84,6 +89,7 @@ class Admin(commands.Cog):
                     send_messages=True,
                     connect=True
                 ),
+                
             })
             your_dep = await ctx.guild.create_text_channel(f"in-{chan_name}", category=cat, overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -94,7 +100,7 @@ class Admin(commands.Cog):
 
             await ctx.guild.create_text_channel(chan_name, category=cat)
             await ctx.guild.create_voice_channel(name, category=cat)
-            await ctx.guild.create_text_channel(f"{chan_name}-feedback", category=cat, overwrites={
+            await ctx.guild.create_text_channel(f"{chan_name}-input", category=cat, overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
             })
 
