@@ -147,8 +147,13 @@ class Admin(commands.Cog):
 
         rows = await self.bot.pool.fetch("SELECT user_id, role_name, is_hod FROM user_roles")
 
+        assigned = 1
+
         for row in rows:
-            await ctx.send(f"Assigning {row['user_id']} to {row['role_name']} (hod={row['is_hod']})")
+            if assigned % 10 == 0:
+                await ctx.send(f"Sleeping for 3 seconds to avoid rl's [{assigned}/{len(rows)}]")
+
+            await ctx.send(f"Assigning {row['user_id']} to {row['role_name']} (hod={row['is_hod']}) [{assigned}/{len(rows)}]")
             try:
                 user = ctx.guild.get_member(int(row["user_id"]))
                 if not user:
@@ -171,6 +176,10 @@ class Admin(commands.Cog):
 
             await user.add_roles(*give_roles, reason="Rebuilding server")
 
-        await ctx.send("Done!")
+            assigned += 1
+
+        await ctx.send(f"Assigned {len(rows)} users to their respective departments")
+
+        await ctx.send("**Done!**")
 async def setup(bot: Vivum):
     await bot.add_cog(Admin(bot))
