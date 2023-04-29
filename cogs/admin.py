@@ -12,7 +12,7 @@ class Admin(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     @discord.app_commands.choices(
         dept=[
-            discord.app_commands.Choice(name=k, value=v) for k, v in roles.items()
+            discord.app_commands.Choice(name=name, value=name) for name in roles.keys()
         ]
     )
     async def assign(
@@ -27,7 +27,7 @@ class Admin(commands.Cog):
 
         if reassign:
             # Delete from DB
-            await self.bot.pool.execute("DELETE FROM user_roles WHERE user_id = $1", user.id)
+            await self.bot.pool.execute("DELETE FROM user_roles WHERE user_id = $1", str(user.id))
 
             # Remove all roles
             roles_to_rem = []
@@ -43,24 +43,22 @@ class Admin(commands.Cog):
         if not hod_role:
             return await ctx.send("HOD role not found on discord")
         
-        role_name = roles.get(dept)
+        if not roles.get(dept):
+            return await ctx.send(f"Department {dept} not found")
 
-        if not role_name:
-            return await ctx.send("Department not found")
-
-        role: discord.Role = discord.utils.get(ctx.guild.roles, name=role_name)
+        role: discord.Role = discord.utils.get(ctx.guild.roles, name=dept)
 
         if not role:
             return await ctx.send("Role not found on discord")
         
         # Check db to see if a user is alr in another dept
-        row = await self.bot.pool.fetchval("SELECT role FROM user_roles WHERE user_id = $1", user.id)
+        row = await self.bot.pool.fetchval("SELECT role_name FROM user_roles WHERE user_id = $1", str(user.id))
 
         if row and row != dept:
             return await ctx.send(f"User is already in another department ({row}). Set ``reassign`` to True to change a users department or HOD status.")
 
         # Save to DB
-        await self.bot.pool.execute("INSERT INTO user_roles VALUES ($1, $2, $3)", user.id, dept, hod)    
+        await self.bot.pool.execute("INSERT INTO user_roles VALUES ($1, $2, $3)", str(user.id), dept, hod)    
 
         if hod:
             give_roles = [role, hod_role]
@@ -69,7 +67,7 @@ class Admin(commands.Cog):
         
         await user.add_roles(*give_roles, reason=f"Dept assigned: {dept} (hod={hod})")
 
-        await ctx.send(f"Assigned {user.mention} to {dept} department, hod={hod}")
+        await ctx.send(f"Assigned {user.mention} to {dept} department, hod={hod}", allowed_mentions=None)
 
     @commands.hybrid_command()
     @commands.is_owner()
@@ -144,5 +142,35 @@ class Admin(commands.Cog):
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
             })
 
+        # Select all user roles
+        await ctx.send("**Step 3: Assign roles to users**")
+
+        rows = await self.bot.pool.fetch("SELECT user_id, role_name, is_hod FROM user_roles")
+
+        for row in rows:
+            await ctx.send(f"Assigning {row['user_id']} to {row['role_name']} (hod={row['is_hod']})")
+            try:
+                user = ctx.guild.get_member(int(row["user_id"]))
+                if not user:
+                    continue
+            except:
+                continue
+
+            if not roles.get(row["role_name"]):
+                await ctx.send(f"Department {row['role_name']} not found, skipping...")
+
+            role: discord.Role = discord.utils.get(ctx.guild.roles, name=row["role_name"])
+
+            if not role:
+                continue   
+
+            give_roles = [role]
+            if row["is_hod"]:
+                hod_role: discord.Role = discord.utils.get(ctx.guild.roles, name="HOD")
+                give_roles.append(hod_role)
+
+            await user.add_roles(*give_roles, reason="Rebuilding server")
+
+        await ctx.send("Done!")
 async def setup(bot: Vivum):
     await bot.add_cog(Admin(bot))

@@ -17,6 +17,8 @@ roles = {
     "Music": "music",
     "Fun Activities": "fun",
     "Drama": "drama",
+    "Registration": "reg",
+    "Design": "design",
     "Fundraising": "fundraising",
     "Distribution": "dist",
     "Social Media": "smm",
