@@ -11,7 +11,7 @@ class Admin(commands.Cog):
     @commands.hybrid_command()
     @commands.has_guild_permissions(administrator=True)
     @discord.app_commands.choices(
-        [
+        dept=[
             discord.app_commands.Choice(name=k, value=v) for k, v in roles.items()
         ]
     )
