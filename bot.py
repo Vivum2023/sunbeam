@@ -4,11 +4,12 @@ import asyncpg
 import discord
 from discord.ext import commands
 import logging
-from config import Config
+from config import Config, roles
 
 class Vivum(commands.Bot):
     pool: asyncpg.Pool
     config: Config
+    roles: dict[str, str]
 
     def __init__(self, config: Config):
         self.config = config
@@ -21,6 +22,8 @@ class Vivum(commands.Bot):
         if not self.config.disabled:
             self.config.disabled = []
 
+        self.roles = roles
+
     async def setup_hook(self):
         logging.info("Called setup_hook")
 
@@ -32,6 +35,15 @@ class Vivum(commands.Bot):
                 name TEXT NOT NULL,
                 description TEXT NOT NULL,
                 url TEXT NOT NULL
+            )
+        """)
+
+        await self.pool.execute("""
+            CREATE TABLE IF NOT EXISTS user_roles (
+                user_id TEXT NOT NULL,
+                role_name TEXT NOT NULL,
+                is_hod BOOLEAN NOT NULL,
+                PRIMARY KEY (user_id, role_name)
             )
         """)
 

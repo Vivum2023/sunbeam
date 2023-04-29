@@ -2,45 +2,84 @@ import discord
 from discord.ext import commands
 
 from bot import Vivum
+from config import roles, protected_roles
 
 class Admin(commands.Cog):
     def __init__(self, bot: Vivum):
         self.bot = bot
 
-    @commands.command()
+    @commands.hybrid_command()
+    @commands.has_guild_permissions(administrator=True)
+    @discord.app_commands.choices(
+        [
+            discord.app_commands.Choice(name=k, value=v) for k, v in roles.items()
+        ]
+    )
+    async def assign(
+        self, 
+        ctx: commands.Context, 
+        user: discord.Member, 
+        dept: str, 
+        hod: bool,
+        reassign: bool = False
+    ):
+        await ctx.defer(ephemeral=False)
+
+        if reassign:
+            # Delete from DB
+            await self.bot.pool.execute("DELETE FROM user_roles WHERE user_id = $1", user.id)
+
+            # Remove all roles
+            roles_to_rem = []
+            for role in user.roles:
+                if role.name.lower() not in protected_roles:
+                    roles_to_rem.append(role)
+            
+            await user.remove_roles(*roles_to_rem, reason="Reassigning user department")
+
+        # Find HOD role by name
+        hod_role: discord.Role = discord.utils.get(ctx.guild.roles, name="HOD")
+
+        if not hod_role:
+            return await ctx.send("HOD role not found on discord")
+        
+        role_name = roles.get(dept)
+
+        if not role_name:
+            return await ctx.send("Department not found")
+
+        role: discord.Role = discord.utils.get(ctx.guild.roles, name=role_name)
+
+        if not role:
+            return await ctx.send("Role not found on discord")
+        
+        # Check db to see if a user is alr in another dept
+        row = await self.bot.pool.fetchval("SELECT role FROM user_roles WHERE user_id = $1", user.id)
+
+        if row and row != dept:
+            return await ctx.send(f"User is already in another department ({row}). Set ``reassign`` to True to change a users department or HOD status.")
+
+        # Save to DB
+        await self.bot.pool.execute("INSERT INTO user_roles VALUES ($1, $2, $3)", user.id, dept, hod)    
+
+        if hod:
+            give_roles = [role, hod_role]
+        else:
+            give_roles = [role]
+        
+        await user.add_roles(*give_roles, reason=f"Dept assigned: {dept} (hod={hod})")
+
+        await ctx.send(f"Assigned {user.mention} to {dept} department, hod={hod}")
+
+    @commands.hybrid_command()
     @commands.is_owner()
     async def buildserver(self, ctx: commands.Context):
         await ctx.send("Building server channels, please wait...")
-
-        chans = {
-            "Logistics": "logistics",
-            "Security": "security",
-            "Vendor Acquisition": "vendor",
-            "Sports": "sports",
-            "Dance": "dance",
-            "Stage Management": "stage",
-            "Finance": "finance",
-            "Music": "music",
-            "Fun Activities": "fun",
-            "Drama": "drama",
-            "Fundraising": "fundraising",
-            "Distribution": "dist",
-            "Social Media": "smm",
-            "Merchandise": "merch",
-        }
 
         protected_cats = [
             "information",
             "general",
             "admin"
-        ]
-
-        protected_roles = [
-            "sudo",
-            "admin",
-            "tech support",
-            "everyone",
-            "vc"
         ]
 
         # Delete all channels not in protected_cats
@@ -70,13 +109,13 @@ class Admin(commands.Cog):
 
         hod = await ctx.guild.create_role(name="HOD")
 
-        for name, chan_name in chans.items():
+        for name, chan_name in self.bot.roles.items():
             await ctx.send(f"Creating department {name}...")
             role = await ctx.guild.create_role(name=name, hoist=True)
 
             cat = await ctx.guild.create_category(name, overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(
-                    read_messages=False, 
+                    read_messages=True, 
                     send_messages=False,
                     connect=False
                 ),
