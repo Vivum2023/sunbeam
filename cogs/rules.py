@@ -6,7 +6,7 @@ class Rules(commands.Cog):
     def __init__(self, bot: Vivum):
         self.bot = bot
     
-    @commands.command()
+    @commands.hybrid_command()
     async def rules(self, ctx: commands.Context):
         general_chan = find(lambda x: x.name.startswith("general"), ctx.guild.channels)
         spam = find(lambda x: x.name.startswith("spam"), ctx.guild.channels)

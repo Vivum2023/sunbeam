@@ -27,7 +27,7 @@ class Admin(commands.Cog):
 
         if reassign:
             # Delete from DB
-            await self.bot.pool.execute("DELETE FROM user_roles WHERE user_id = $1", str(user.id))
+            await self.bot.pool.execute("DELETE FROM users WHERE user_id = $1", str(user.id))
 
             # Remove all roles
             roles_to_rem = []
@@ -52,13 +52,13 @@ class Admin(commands.Cog):
             return await ctx.send("Role not found on discord")
         
         # Check db to see if a user is alr in another dept
-        row = await self.bot.pool.fetchval("SELECT role_name FROM user_roles WHERE user_id = $1", str(user.id))
+        row = await self.bot.pool.fetchval("SELECT role_name FROM users WHERE user_id = $1", str(user.id))
 
         if row and row != dept:
             return await ctx.send(f"User is already in another department ({row}). Set ``reassign`` to True to change a users department or HOD status.")
 
         # Save to DB
-        await self.bot.pool.execute("INSERT INTO user_roles VALUES ($1, $2, $3)", str(user.id), dept, hod)    
+        await self.bot.pool.execute("INSERT INTO users VALUES ($1, $2, $3)", str(user.id), dept, hod)    
 
         if hod:
             give_roles = [role, hod_role]
@@ -145,7 +145,7 @@ class Admin(commands.Cog):
         # Select all user roles
         await ctx.send("**Step 3: Assign roles to users**")
 
-        rows = await self.bot.pool.fetch("SELECT user_id, role_name, is_hod FROM user_roles")
+        rows = await self.bot.pool.fetch("SELECT user_id, role_name, is_hod FROM users")
 
         assigned = 1
 
@@ -181,5 +181,6 @@ class Admin(commands.Cog):
         await ctx.send(f"Assigned {len(rows)} users to their respective departments")
 
         await ctx.send("**Done!**")
+        
 async def setup(bot: Vivum):
     await bot.add_cog(Admin(bot))

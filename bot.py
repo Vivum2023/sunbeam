@@ -24,28 +24,17 @@ class Vivum(commands.Bot):
 
         self.roles = roles
 
+    async def setup_db(self):
+        logging.info("Setting up database...")
+        with open("sql/setup.sql") as f:
+            await self.pool.execute(f.read())
+
     async def setup_hook(self):
         logging.info("Called setup_hook")
 
         self.pool = await asyncpg.create_pool(self.config.database_url)
 
-        await self.pool.execute("""
-            CREATE TABLE IF NOT EXISTS resources (
-                id UUID PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT NOT NULL,
-                url TEXT NOT NULL
-            )
-        """)
-
-        await self.pool.execute("""
-            CREATE TABLE IF NOT EXISTS user_roles (
-                user_id TEXT NOT NULL,
-                role_name TEXT NOT NULL,
-                is_hod BOOLEAN NOT NULL,
-                PRIMARY KEY (user_id, role_name)
-            )
-        """)
+        await self.setup_db()
 
         try:
             await self.load_extension("jishaku")
