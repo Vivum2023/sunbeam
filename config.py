@@ -30,5 +30,6 @@ protected_roles = [
     "admin",
     "tech support",
     "everyone",
+    "l'ordinateur",
     "vc"
 ]
