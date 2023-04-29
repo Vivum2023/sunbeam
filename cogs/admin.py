@@ -136,6 +136,11 @@ class Admin(commands.Cog):
 
             await your_dep.send(f"If you can see this channel, it means that you are a part of the '{name}' department!")
 
+            await ctx.guild.create_text_channel(f"{chan_name}-announce", category=cat, overwrites={
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
+                hod: discord.PermissionOverwrite(send_messages=True),
+            }, topic=f"Announcements for the '{name}' department")
             await ctx.guild.create_text_channel(chan_name, category=cat)
             await ctx.guild.create_voice_channel(name, category=cat)
             await ctx.guild.create_text_channel(f"{chan_name}-input", category=cat, overwrites={
@@ -181,6 +186,6 @@ class Admin(commands.Cog):
         await ctx.send(f"Assigned {len(rows)} users to their respective departments")
 
         await ctx.send("**Done!**")
-        
+
 async def setup(bot: Vivum):
     await bot.add_cog(Admin(bot))

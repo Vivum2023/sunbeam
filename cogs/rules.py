@@ -17,9 +17,9 @@ class Rules(commands.Cog):
         await ctx.message.delete()
 
         await ctx.send(f"""
-**1.** Do not leak invites to this server without permission yet
+**1.** Do not leak invites to this server without permission from an organizer (admin)
 **2.** Follow Discord Terms Of Service (https://discord.com/terms) at ALL times
-**3.** This server is right now purely for VIVUM planning and communication
+**3.** This server is (as of right now) right now purely for VIVUM planning and communication
 
 __**HODS**__
 
@@ -35,6 +35,7 @@ __**IMPORTANT NOTES**__
 - Please keep the <#{general_chan.id}> channel as clear as possible, keep spam to the <#{spam.id}> channel
 - The general voice channels are if departments need to work together 
 - Note that normal users do not have "Create Invite" permissions. This is to protect against raids+invite spam and to allow more effective moderation if required (so we dont have to go through everyone's invites)
+- **Please use the ``/finance`` commands to keep track of your department's finances. It will make everyones life easier. Remember to set a budget for yourself**
 
 **Have fun, stay organized**
         """, suppress_embeds=True)

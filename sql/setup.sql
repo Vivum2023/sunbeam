@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS finance_records (
-    user_id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id TEXT NOT NULL,
     role_name TEXT NOT NULL,
     is_hod BOOLEAN NOT NULL,
     name TEXT NOT NULL,

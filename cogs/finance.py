@@ -14,6 +14,12 @@ class TransactionUnit(enum.Enum):
 class Finance(commands.Cog):
     def __init__(self, bot: Vivum):
         self.bot = bot
+    
+    async def finance_embeds(self, ctx: commands.Context, records: list) -> list[discord.Embed]:
+        if len(records) == 0:
+            return [discord.Embed(title="No records found", description="No finance records found for your department", color=discord.Color.red())]
+
+        return []
 
     @commands.hybrid_group()
     async def finance(self, ctx: commands.Context):
@@ -72,6 +78,19 @@ class Finance(commands.Cog):
         )
 
         await ctx.send("Added record")
+    
+    @finance.command()
+    async def yourdept(self, ctx: commands.Context):
+        """View the finance records of your department"""
+        await ctx.defer(ephemeral=False)
+        user = await self.bot.pool.fetchrow("SELECT role_name, is_hod FROM users WHERE user_id = $1", str(ctx.author.id))
+
+        if not user:
+            return await ctx.send("You are not assigned to any department. Please ask an admin to assign you to a department")
+
+        records = await self.bot.pool.fetch("SELECT * FROM finance_records WHERE role_name = $1", user["role_name"])
+
+        await ctx.send(embeds=await self.finance_embeds(ctx, records))
 
 async def setup(bot: Vivum):
     await bot.add_cog(Finance(bot))
