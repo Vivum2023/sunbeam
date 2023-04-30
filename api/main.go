@@ -202,7 +202,7 @@ func main() {
 	}
 
 	// Start server
-	fmt.Println("Starting server on port 30010")
+	fmt.Println("Starting server on port 49104")
 	err = s.ListenAndServe()
 
 	if err != nil {
