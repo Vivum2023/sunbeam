@@ -82,7 +82,19 @@ class Finance(commands.Cog):
         if not user:
             return await ctx.send("You are not assigned to any department. Please ask an admin to assign you to a department")
 
-        await ctx.send(f"Please see {self.bot.config.website}/finances?dept={user['role_name']} for the finance records of your department")
+        await ctx.send(f"Please see {self.bot.config.website}/finances/yourdept for the finance records of your department")
+
+    @finance.command()
+    async def view(self, ctx: commands.Context):
+        """View the finance records of your department"""
+        await ctx.defer(ephemeral=False)
+        user = await self.bot.pool.fetchrow("SELECT role_name, is_hod FROM users WHERE user_id = $1", str(ctx.author.id))
+
+        if not user:
+            return await ctx.send("You are not assigned to any department. Please ask an admin to assign you to a department")
+
+        await ctx.send(f"Please see {self.bot.config.website}/finances for the finance records of your department")
+
 
 async def setup(bot: Vivum):
     await bot.add_cog(Finance(bot))
