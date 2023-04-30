@@ -65,3 +65,12 @@ class Vivum(commands.Bot):
     async def on_ready(self):
         logging.info("on_ready called")
 
+    async def on_command_error(self, ctx: commands.Context, error: Exception):
+        logging.error(f"An error occurred: {error}")
+        if isinstance(error, commands.CommandNotFound):
+            return
+        elif isinstance(error, commands.CheckFailure):
+            return await ctx.send("This command is either disabled or you don't have permission to use it!")
+
+        await ctx.send(f"An error occurred: {error}", ephemeral=True)
+        return

@@ -21,10 +21,4 @@ async def enabled(ctx: commands.Context):
         return False
     return True
 
-@bot.event
-async def on_command_error(ctx: commands.Context, error: Exception):
-    if isinstance(error, commands.CheckFailure):
-        return await ctx.send("This command is disabled.")
-    raise error
-
 bot.run(bot.config.token, log_handler=None)

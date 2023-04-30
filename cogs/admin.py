@@ -28,12 +28,26 @@ class Admin(commands.Cog):
         await ctx.defer(ephemeral=False)
 
         # Check that the user is in the DB
-        user_db = await self.bot.pool.fetchval("SELECT user_id FROM users WHERE user_id = $1", str(user.id))
+        user_db = await self.bot.pool.fetchrow("SELECT user_id, role_name FROM users WHERE user_id = $1", str(user.id))
 
         if not user_db:
             return await ctx.send("User is not in the database")
 
         await self.bot.pool.execute("DELETE FROM users WHERE user_id = $1", str(user.id))
+
+        member = ctx.guild.get_member(user.id)
+
+        if member:
+            # Try to remove their HOD+Dept roles
+            role: discord.Role = discord.utils.get(ctx.guild.roles, name=user_db["role_name"])
+
+            hod_role: discord.Role = discord.utils.get(ctx.guild.roles, name="HOD")
+
+            if hod_role in member.roles:
+                await member.remove_roles(hod_role)
+
+            if role in member.roles:
+                await member.remove_roles(role)
 
         await ctx.send(f"Removed user {user.mention} from the database", allowed_mentions=None)
     
@@ -80,7 +94,7 @@ class Admin(commands.Cog):
                     continue
 
                 logging.info(f"Changed {user.nick} to {name} (mismatched name and nick)")
-                await user.edit(nick=name)
+                await user.edit(nick=name, reason="Mismatched name and nick")
 
         logging.info("Done checking member names")
 
@@ -159,6 +173,9 @@ class Admin(commands.Cog):
             give_roles.append(hod_role)
         
         await user.add_roles(*give_roles, reason=f"Dept assigned: {dept} (hod={hod})")
+
+        if ctx.guild.owner_id != user.id:
+            await user.edit(nick=name, reason="Update nick to match actual name")
 
         await ctx.send(f"Assigned {user.mention} to {dept} department, hod={hod}", allowed_mentions=None)
 
