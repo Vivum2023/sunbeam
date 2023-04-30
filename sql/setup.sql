@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS resources (
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
     role_name TEXT NOT NULL,
     is_hod BOOLEAN NOT NULL
 );
