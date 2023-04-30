@@ -1,2 +1,3 @@
-port:
+port: 3948
 url:
+database_url: postgres:///vivum

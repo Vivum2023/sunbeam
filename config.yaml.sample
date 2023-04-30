@@ -1,5 +1,6 @@
 token: 
 prefix: "!"
+website: vivum.botlist.app
 disabled: 
   # - buildserver
 database_url: "postgres:///vivum"

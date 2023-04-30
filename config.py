@@ -3,6 +3,7 @@ from pydantic import BaseModel
 class Config(BaseModel):
     token: str
     prefix: str
+    website: str
     disabled: list[str] | None = None
     database_url: str
     google_drive_backup_folder_id: str

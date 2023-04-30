@@ -6,11 +6,13 @@
 2. Create a database called vivum: ``CREATE DATABASE vivum;``
 3. Create a Google Cloud Platform project, then enable "Google Drive API" and then lastly, create a service account and download the credentials file. Create a folder on your own Google Drive and share it with the service account email, copy the folder ID from the URL of the folder created and paste it in the config file as the "google_drive_backup_folder_id" value.
 
-## Setup API
+## Setup API 
 
-The API requires deployproxy to be installed and configured: https://github.com/infinitybotlist/deployproxy
+The API requires deployproxy for authentication.
 
-Sample deploy code for deployproxy:
+You can setup and configure deployproxy using https://github.com/infinitybotlist/deployproxy
+
+Sample deploy service for deployproxy:
 
 ```yaml
   vivum.botlist.app:

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha512"
 	"embed"
@@ -17,6 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,6 +28,7 @@ var frontend embed.FS
 var (
 	config *Config
 	v      *validator.Validate
+	pool   *pgxpool.Pool
 
 	// Subbed frontend embed
 	serverRootSubbed fs.FS
@@ -101,6 +104,39 @@ func ensureDpAuth(next http.Handler) http.Handler {
 	})
 }
 
+func ensureHasDept(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/errors/nodept" || strings.HasPrefix(r.URL.Path, "/404") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		userId := r.Header.Get("X-DP-UserID")
+
+		if userId == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("X-DP-UserID header not found."))
+			return
+		}
+
+		// Check if user has dept on postgres
+		var count int64
+
+		err := pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM users WHERE user_id = $1", userId).Scan(&count)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Error while querying database."))
+			return
+		}
+
+		if count == 0 {
+			http.Redirect(w, r, "/errors/nodept", http.StatusFound)
+			return
+		}
+	})
+}
+
 func routeStatic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, "/api") {
@@ -164,8 +200,20 @@ func main() {
 		panic(err)
 	}
 
+	pool, err = pgxpool.New(context.Background(), config.DatabaseURL)
+
+	if err != nil {
+		panic(err)
+	}
+
 	// Create validator
 	v = validator.New()
+
+	err = v.Struct(config)
+
+	if err != nil {
+		panic(err)
+	}
 
 	// Create subbed frontend embed
 	// Serve frontend
@@ -184,6 +232,7 @@ func main() {
 		middleware.CleanPath,
 		middleware.RealIP,
 		ensureDpAuth,
+		ensureHasDept,
 		routeStatic,
 		middleware.Timeout(30*time.Second),
 	)
