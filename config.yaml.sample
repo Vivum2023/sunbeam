@@ -1,0 +1,6 @@
+token: 
+prefix: "!"
+disabled: 
+  # - buildserver
+database_url: "postgres:///vivum"
+google_drive_backup_folder_id: 
