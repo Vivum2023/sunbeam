@@ -11,9 +11,17 @@ import logging
 import tempfile
 import subprocess
 from googleapiclient.http import MediaFileUpload
-from datetime import datetime
+from datetime import datetime, time, timezone
 
 GIVE_PERMS_ANYONE = False
+
+utc = timezone.utc
+times = [
+    time(hour=0, tzinfo=utc),
+    time(hour=6, minute=15, tzinfo=utc),
+    time(hour=12, minute=30, tzinfo=utc),
+    time(hour=18, minute=45, tzinfo=utc),
+]
 
 class MemoryCache(Cache):
     _CACHE = {}
@@ -50,7 +58,7 @@ class Backups(commands.Cog):
 
         self.backup.start()
 
-    @tasks.loop(hours=6)
+    @tasks.loop(time=times)
     async def backup(self):
         if not self.gservice:
             return

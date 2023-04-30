@@ -35,6 +35,7 @@ __**IMPORTANT NOTES**__
 - Please keep the <#{general_chan.id}> channel as clear as possible, keep spam to the <#{spam.id}> channel
 - The general voice channels are if departments need to work together 
 - Note that normal users do not have "Create Invite" permissions. This is to protect against raids+invite spam and to allow more effective moderation if required (so we dont have to go through everyone's invites)
+- You can use the internal website ({self.bot.config.website}) for a superior experience in running some of {self.bot.user.mention}'s commands
 - **Please use the ``/finance`` commands to keep track of your department's finances. It will make everyones life easier. Remember to set a budget for yourself**
 
 **Have fun, stay organized**

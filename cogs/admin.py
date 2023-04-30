@@ -50,7 +50,7 @@ class Admin(commands.Cog):
 
         if not role:
             return await ctx.send("Role not found on discord")
-        
+
         # Check db to see if a user is alr in another dept
         row = await self.bot.pool.fetchval("SELECT role_name FROM users WHERE user_id = $1", str(user.id))
 
@@ -60,10 +60,9 @@ class Admin(commands.Cog):
         # Save to DB
         await self.bot.pool.execute("INSERT INTO users VALUES ($1, $2, $3)", str(user.id), dept, hod)    
 
+        give_roles = [role]
         if hod:
-            give_roles = [role, hod_role]
-        else:
-            give_roles = [role]
+            give_roles.append(hod_role)
         
         await user.add_roles(*give_roles, reason=f"Dept assigned: {dept} (hod={hod})")
 
@@ -134,7 +133,9 @@ class Admin(commands.Cog):
                 role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
             })
 
-            await your_dep.send(f"If you can see this channel, it means that you are a part of the '{name}' department!")
+            await your_dep.send(f"""If you can see this channel, it means that you are a part of the '{name}' department!
+            
+**This channel is a system channel created by the bot and as such no one (other than admins), not even HOD's can send messages here**""")
 
             await ctx.guild.create_text_channel(f"{chan_name}-announce", category=cat, overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -176,8 +177,7 @@ class Admin(commands.Cog):
 
             give_roles = [role]
             if row["is_hod"]:
-                hod_role: discord.Role = discord.utils.get(ctx.guild.roles, name="HOD")
-                give_roles.append(hod_role)
+                give_roles.append(hod)
 
             await user.add_roles(*give_roles, reason="Rebuilding server")
 

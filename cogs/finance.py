@@ -9,7 +9,7 @@ class TranscationType(enum.Enum):
 
 class TransactionUnit(enum.Enum):
     IndianRupees = 1
-    IndianPaise = 2
+    IndianPaisa = 2
 
 class Finance(commands.Cog):
     def __init__(self, bot: Vivum):

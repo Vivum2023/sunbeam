@@ -7,6 +7,7 @@ class Config(BaseModel):
     disabled: list[str] | None = None
     database_url: str
     google_drive_backup_folder_id: str
+    test_mode: bool | None = None
 
 roles = {
     "Logistics": "logistics",
