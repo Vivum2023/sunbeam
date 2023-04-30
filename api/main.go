@@ -134,6 +134,10 @@ func ensureHasDept(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/errors/nodept", http.StatusFound)
 			return
 		}
+
+		r.Context()
+
+		next.ServeHTTP(w, r)
 	})
 }
 
