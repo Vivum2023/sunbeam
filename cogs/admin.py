@@ -1,5 +1,7 @@
+import asyncio
+import logging
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from bot import Vivum
 from config import roles, protected_roles
@@ -7,6 +9,7 @@ from config import roles, protected_roles
 class Admin(commands.Cog):
     def __init__(self, bot: Vivum):
         self.bot = bot
+        self.sanity_check.start()
     
     @commands.hybrid_command()
     @commands.has_guild_permissions(administrator=True)
@@ -47,6 +50,43 @@ class Admin(commands.Cog):
         await self.bot.pool.execute("UPDATE users SET name = $1 WHERE user_id = $2", name, str(user.id))
 
         await ctx.send(f"Updated name for {user.mention} to {name}", allowed_mentions=None)
+
+    @tasks.loop(minutes=15)
+    async def sanity_check(self):
+        logging.info("Checking member names")
+
+        # Get all members
+        members = await self.bot.pool.fetch("SELECT user_id, name FROM users")
+
+        if len(self.bot.guilds) > 1:
+            # Leave all guilds
+            for guild in self.bot.guilds:
+                if guild.id != self.bot.config.guild_id:
+                    await guild.leave()
+
+        guild = self.bot.guilds[0]
+
+        for member in members:
+            user_id, name = member["user_id"], member["name"]
+
+            user = guild.get_member(int(user_id))
+
+            if not user:
+                continue
+
+            if user.nick != name:
+                if guild.owner_id == user.id:
+                    logging.warn(f"Skipping guild owner {user.name} [{user.nick}] -> {name}")
+                    continue
+
+                logging.info(f"Changed {user.nick} to {name} (mismatched name and nick)")
+                await user.edit(nick=name)
+
+        logging.info("Done checking member names")
+
+    @sanity_check.before_loop
+    async def before_sanity_check(self):
+        await self.bot.wait_until_ready()
 
     @commands.hybrid_command()
     @commands.has_guild_permissions(administrator=True)
@@ -205,19 +245,24 @@ class Admin(commands.Cog):
         # Select all user roles
         await ctx.send("**Step 3: Assign roles to users**")
 
-        rows = await self.bot.pool.fetch("SELECT user_id, role_name, is_hod FROM users")
+        rows = await self.bot.pool.fetch("SELECT user_id, role_name, name, is_hod FROM users")
 
         assigned = 1
 
         for row in rows:
             if assigned % 10 == 0:
                 await ctx.send(f"Sleeping for 3 seconds to avoid rl's [{assigned}/{len(rows)}]")
+                await asyncio.sleep(3)
 
             await ctx.send(f"Assigning {row['user_id']} to {row['role_name']} (hod={row['is_hod']}) [{assigned}/{len(rows)}]")
             try:
                 user = ctx.guild.get_member(int(row["user_id"]))
                 if not user:
                     continue
+                
+                if not user.nick or user.nick != row["name"]:
+                    await user.edit(nick=row["name"], reason="Nickname mismatch")
+
             except:
                 continue
 

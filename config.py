@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 class Config(BaseModel):
     token: str
+    guild_id: int
     prefix: str
     website: str
     disabled: list[str] | None = None

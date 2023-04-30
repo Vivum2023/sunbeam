@@ -1,7 +1,9 @@
 token: 
+guild_id: 1097904441543376966
 prefix: "!"
-website: vivum.botlist.app
+website: https://vivum.botlist.app
 disabled: 
   # - buildserver
 database_url: "postgres:///vivum"
 google_drive_backup_folder_id: 
+test_mode: false
