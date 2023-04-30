@@ -5,6 +5,7 @@ class Config(BaseModel):
     prefix: str
     disabled: list[str] | None = None
     database_url: str
+    google_drive_backup_folder_id: str
 
 roles = {
     "Logistics": "logistics",

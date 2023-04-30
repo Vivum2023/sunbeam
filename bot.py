@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 import logging
 from config import Config, roles
+import asyncio
 
 class Vivum(commands.Bot):
     pool: asyncpg.Pool
@@ -54,9 +55,12 @@ class Vivum(commands.Bot):
 
         logging.info("Bot setup complete!")
 
-        await self.tree.sync()
+        async def sync_tree():
+            logging.info("Starting command tree sync")
+            await self.tree.sync()
+            logging.info("Synced command tree")
 
-        logging.info("Synced command tree")
+        asyncio.create_task(sync_tree())
     
     async def on_ready(self):
         logging.info("on_ready called")

@@ -2,3 +2,6 @@ jishaku
 ruamel.yaml
 pydantic
 asyncpg
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
