@@ -50,7 +50,7 @@ class Backups(commands.Cog):
 
         self.backup.start()
 
-    @tasks.loop(hours=2)
+    @tasks.loop(hours=6)
     async def backup(self):
         if not self.gservice:
             return
