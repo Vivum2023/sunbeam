@@ -142,10 +142,14 @@ class Backups(commands.Cog):
             logging.info(f"Got file link: {file_link.get('webViewLink')}")
 
             # Send message to log channel
-            await log_channel.send(
-                f"Backup complete at {datetime.now()}! Uploaded to drive with id {file.get('id')}.\n\n{file_link.get('webViewLink')}",
-                suppress_embeds=True
-            )
+            if isinstance(log_channel, discord.TextChannel):
+                await log_channel.send(
+                    f"Backup complete at {datetime.now()}! Uploaded to drive with id {file.get('id')}.\n\n{file_link.get('webViewLink')}",
+                    suppress_embeds=True
+                )
+            else:
+                logging.error("Backup logs channel is not a text channel")
+                return
 
         except Exception as e:
             logging.error(f"Failed to upload file to drive: {e}")

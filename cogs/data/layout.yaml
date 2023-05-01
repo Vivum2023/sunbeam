@@ -1,0 +1,69 @@
+# HOD role
+hod_role:
+  hoist: false
+  perms:
+    # Common permission for all organizers
+    view_audit_log: true
+    # HOD's should be able to manage messages
+    manage_messages: true
+
+dept_role:
+  # All department roles should be hoisted
+  hoist: true
+  perms:
+    view_audit_log: true
+
+categories:
+  - name: $label
+    overwrites:
+      everyone:
+        read_messages: true
+        send_messages: false
+        connect: false
+      hod:
+        read_messages: true
+        send_messages: false
+        connect: false
+      dept:
+        read_messages: true
+        send_messages: true
+        connect: true
+    channels:
+      - name: in-$name
+        type: text
+        topic: "This channel is to allow you to know that you are in the '$label' department"
+        overwrites:
+          everyone:
+            read_messages: false
+          dept:
+            read_messages: true
+            send_messages: false
+        message: |
+          If you can see this channel, it means that you are a part of the '$label' department!
+                  
+          **This channel is a system channel created by the bot and as such no one (other than admins), not even HOD's can send messages here**
+      
+      - name: $name-announce
+        type: text
+        topic: "Announcements specific to the '$label' department"
+        overwrites:
+          everyone:
+            read_messages: false
+          dept:
+            read_messages: true
+            send_messages: false
+          hod:
+            send_messages: true
+
+      - name: $name
+        type: text
+
+      - name: $label
+        type: voice
+
+      - name: $name-input
+        type: text
+        overwrites:
+          everyone:
+            read_messages: true
+            send_messages: true

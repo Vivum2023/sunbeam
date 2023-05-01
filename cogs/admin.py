@@ -2,6 +2,7 @@ import asyncio
 import logging
 import discord
 from discord.ext import commands, tasks
+from cogs.data.layout import ChannelType
 
 from bot import Vivum
 from config import roles, protected_roles
@@ -25,6 +26,9 @@ class Admin(commands.Cog):
     @commands.hybrid_command()
     @commands.has_guild_permissions(administrator=True)
     async def remuser(self, ctx: commands.Context, user: discord.User):
+        if not ctx.guild:
+            return await ctx.send("This command can only be used in a guild")
+
         await ctx.defer(ephemeral=False)
 
         # Check that the user is in the DB
@@ -39,9 +43,9 @@ class Admin(commands.Cog):
 
         if member:
             # Try to remove their HOD+Dept roles
-            role: discord.Role = discord.utils.get(ctx.guild.roles, name=user_db["role_name"])
+            role: discord.Role | None = discord.utils.get(ctx.guild.roles, name=user_db["role_name"])
 
-            hod_role: discord.Role = discord.utils.get(ctx.guild.roles, name="HOD")
+            hod_role: discord.Role | None = discord.utils.get(ctx.guild.roles, name="HOD")
 
             if hod_role in member.roles:
                 await member.remove_roles(hod_role)
@@ -121,6 +125,9 @@ class Admin(commands.Cog):
         hod: bool,
         reassign: bool = False
     ):
+        if not ctx.guild:
+            return await ctx.send("This command can only be used in a guild")
+
         await ctx.defer(ephemeral=False)
 
         if len(name.split(" ")) != 2:
@@ -146,7 +153,7 @@ class Admin(commands.Cog):
             await user.remove_roles(*roles_to_rem, reason="Reassigning user department")            
 
         # Find HOD role by name
-        hod_role: discord.Role = discord.utils.get(ctx.guild.roles, name="HOD")
+        hod_role: discord.Role | None = discord.utils.get(ctx.guild.roles, name="HOD")
 
         if not hod_role:
             return await ctx.send("HOD role not found on discord")
@@ -154,7 +161,7 @@ class Admin(commands.Cog):
         if not roles.get(dept):
             return await ctx.send(f"Department {dept} not found")
 
-        role: discord.Role = discord.utils.get(ctx.guild.roles, name=dept)
+        role: discord.Role | None = discord.utils.get(ctx.guild.roles, name=dept)
 
         if not role:
             return await ctx.send("Role not found on discord")
@@ -166,7 +173,8 @@ class Admin(commands.Cog):
             return await ctx.send(f"User is already in another department ({row}). Set ``reassign`` to True to change a users department or HOD status.")
 
         # Save to DB
-        await self.bot.pool.execute("INSERT INTO users (user_id, role_name, is_hod, name) VALUES ($1, $2, $3, #4)", str(user.id), dept, hod, name)    
+        logging.info("Saving to DB")
+        await self.bot.pool.execute("INSERT INTO users (user_id, role_name, is_hod, name) VALUES ($1, $2, $3, $4)", str(user.id), dept, hod, name)    
 
         give_roles = [role]
         if hod:
@@ -182,6 +190,9 @@ class Admin(commands.Cog):
     @commands.hybrid_command()
     @commands.is_owner()
     async def buildserver(self, ctx: commands.Context):
+        if not ctx.guild:
+            return await ctx.send("This command can only be used in a guild")
+
         await ctx.send("Building server channels, please wait...")
 
         protected_cats = [
@@ -215,49 +226,76 @@ class Admin(commands.Cog):
 
         await ctx.send("**Step 2: Create new roles and channels**")
 
-        hod = await ctx.guild.create_role(name="HOD")
+        hod = await ctx.guild.create_role(
+            name="HOD",
+            hoist=self.bot.layout.hod_role.hoist,
+            permissions=self.bot.layout.hod_role.permissions()
+        )
 
         for name, chan_name in self.bot.roles.items():
             await ctx.send(f"Creating department {name}...")
-            role = await ctx.guild.create_role(name=name, hoist=True)
+            role = await ctx.guild.create_role(
+                name=name, 
+                hoist=self.bot.layout.dept_role.hoist,
+                permissions=self.bot.layout.dept_role.permissions()
+            )
 
-            cat = await ctx.guild.create_category(name, overwrites={
-                ctx.guild.default_role: discord.PermissionOverwrite(
-                    read_messages=True, 
-                    send_messages=False,
-                    connect=False
-                ),
-                hod: discord.PermissionOverwrite(
-                    read_messages=True, 
-                    send_messages=False,
-                    connect=False
-                ),
-                role: discord.PermissionOverwrite(
-                    read_messages=True, 
-                    send_messages=True,
-                    connect=True
-                ),
-                
-            })
-            your_dep = await ctx.guild.create_text_channel(f"in-{chan_name}", category=cat, overwrites={
-                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
-            })
+            for cat_dat in self.bot.layout.categories:
+                cat = await ctx.guild.create_category(
+                    self.bot.layout.replace_str(
+                        cat_dat.name,
+                        name=chan_name,
+                        label=name
+                    ),
+                    overwrites=cat_dat.overwrites.construct(
+                        ctx.guild.default_role,
+                        role,
+                        hod
+                    ) if cat_dat.overwrites else {}
+                )
 
-            await your_dep.send(f"""If you can see this channel, it means that you are a part of the '{name}' department!
-            
-**This channel is a system channel created by the bot and as such no one (other than admins), not even HOD's can send messages here**""")
+                for chan in cat_dat.channels:
+                    match chan.type:
+                        case ChannelType.Text:
+                            channel = await ctx.guild.create_text_channel(
+                                self.bot.layout.replace_str(
+                                    chan.name,
+                                    name=chan_name,
+                                    label=name
+                                ),
+                                category=cat,
+                                overwrites=chan.overwrites.construct(
+                                    ctx.guild.default_role,
+                                    role,
+                                    hod
+                                ) if chan.overwrites else {},
+                                topic = self.bot.layout.replace_str(
+                                    chan.topic or "",
+                                    name=chan_name,
+                                    label=name
+                                ) if chan.topic else ""
+                            )
 
-            await ctx.guild.create_text_channel(f"{chan_name}-announce", category=cat, overwrites={
-                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
-                hod: discord.PermissionOverwrite(send_messages=True),
-            }, topic=f"Announcements for the '{name}' department")
-            await ctx.guild.create_text_channel(chan_name, category=cat)
-            await ctx.guild.create_voice_channel(name, category=cat)
-            await ctx.guild.create_text_channel(f"{chan_name}-input", category=cat, overwrites={
-                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            })
+                            if chan.message:
+                                await channel.send(self.bot.layout.replace_str(
+                                    chan.message,
+                                    name=chan_name,
+                                    label=name
+                                ))
+                        case ChannelType.Voice:
+                            await ctx.guild.create_voice_channel(
+                                self.bot.layout.replace_str(
+                                    chan.name,
+                                    name=chan_name,
+                                    label=name
+                                ),
+                                category=cat,
+                                overwrites=chan.overwrites.construct(
+                                    ctx.guild.default_role,
+                                    role,
+                                    hod
+                                ) if chan.overwrites else {},
+                            )
 
         # Select all user roles
         await ctx.send("**Step 3: Assign roles to users**")
@@ -286,7 +324,7 @@ class Admin(commands.Cog):
             if not roles.get(row["role_name"]):
                 await ctx.send(f"Department {row['role_name']} not found, skipping...")
 
-            role: discord.Role = discord.utils.get(ctx.guild.roles, name=row["role_name"])
+            role: discord.Role | None = discord.utils.get(ctx.guild.roles, name=row["role_name"])
 
             if not role:
                 continue   

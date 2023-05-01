@@ -6,13 +6,15 @@ from discord.ext import commands
 import logging
 from config import Config, roles
 import asyncio
+from cogs.data.layout import Layout
 
 class Vivum(commands.Bot):
     pool: asyncpg.Pool
     config: Config
     roles: dict[str, str]
+    layout: Layout
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, layout_obj: Layout):
         self.config = config
         super().__init__(
             command_prefix = config.prefix,
@@ -24,6 +26,7 @@ class Vivum(commands.Bot):
             self.config.disabled = []
 
         self.roles = roles
+        self.layout = layout_obj
 
     async def setup_db(self):
         logging.info("Setting up database...")
@@ -33,7 +36,13 @@ class Vivum(commands.Bot):
     async def setup_hook(self):
         logging.info("Called setup_hook")
 
-        self.pool = await asyncpg.create_pool(self.config.database_url)
+        pool = await asyncpg.create_pool(self.config.database_url)
+
+        if not pool:
+            logging.error("Failed to create pool")
+            exit(1)
+
+        self.pool = pool
 
         await self.setup_db()
 
