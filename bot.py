@@ -19,7 +19,7 @@ class Vivum(commands.Bot):
         super().__init__(
             command_prefix = config.prefix,
             intents=discord.Intents.all(),
-            activity=discord.Game(name="cats")
+            activity=discord.Game(name="Equestria")
         )
 
         if not self.config.disabled:
