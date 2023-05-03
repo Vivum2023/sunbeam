@@ -29,6 +29,7 @@ var (
 	config *Config
 	v      *validator.Validate
 	pool   *pgxpool.Pool
+	ctx    = context.Background()
 
 	// Subbed frontend embed
 	serverRootSubbed fs.FS
