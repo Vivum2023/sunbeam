@@ -8,6 +8,12 @@ class Rules(commands.Cog):
     
     @commands.hybrid_command()
     async def rules(self, ctx: commands.Context):
+        if not ctx.guild:
+            return await ctx.send("This command can only be used in a guild", ephemeral=True)
+
+        if not self.bot.user:
+            return await ctx.send("Bot is not ready yet", ephemeral=True)
+
         general_chan = find(lambda x: x.name.startswith("general"), ctx.guild.channels)
         spam = find(lambda x: x.name.startswith("spam"), ctx.guild.channels)
 
