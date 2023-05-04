@@ -203,11 +203,13 @@ class Server(commands.Cog):
 
         chans_covered = []
         for name, chan_name in self.bot.roles.items():
-            await ctx.send(f"=> Checking department {name}...")
+            msgs_to_send = []
+
+            msgs_to_send.append(f"=> Checking department {name}...")
             role: discord.Role | None = discord.utils.get(ctx.guild.roles, name=name)
 
             if not role:
-                await ctx.send(f"=> Creating non-existent role {name}")
+                msgs_to_send.append(f"=> Creating non-existent role {name}")
                 role = await ctx.guild.create_role(
                     name=name, 
                     hoist=self.bot.layout.dept_role.hoist,
@@ -222,7 +224,7 @@ class Server(commands.Cog):
                 ))
 
                 if not cat:
-                    await ctx.send(f"=> Creating non-existent category {self.bot.layout.replace_str(cat_dat.name, name=chan_name, label=name)}")
+                    msgs_to_send.append(f"=> Creating non-existent category {self.bot.layout.replace_str(cat_dat.name, name=chan_name, label=name)}")
                     cat = await ctx.guild.create_category(
                         self.bot.layout.replace_str(
                             cat_dat.name,
@@ -236,9 +238,9 @@ class Server(commands.Cog):
                         ) if cat_dat.overwrites else {}
                     )
                 else:
-                    await ctx.send(f"=> Found category {self.bot.layout.replace_str(cat_dat.name, name=chan_name, label=name)}")
+                    msgs_to_send.append(f"=> Found existing category {self.bot.layout.replace_str(cat_dat.name, name=chan_name, label=name)}")
 
-                    ov =  cat_dat.overwrites.construct(
+                    ov = cat_dat.overwrites.construct(
                         ctx.guild.default_role,
                         role,
                         hod
@@ -266,7 +268,7 @@ class Server(commands.Cog):
                             ))
 
                             if not c:
-                                await ctx.send(f"=> Creating non-existent text channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
+                                msgs_to_send.append(f"=> Creating non-existent text channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
 
                                 channel = await ctx.guild.create_text_channel(
                                     self.bot.layout.replace_str(
@@ -296,38 +298,57 @@ class Server(commands.Cog):
                                 
                                 chans_covered.append(channel.id)
                             else:
-                                # Edit permissions
-                                await ctx.send(f"=> Editing permissions for text channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
+                                args = {}
 
-                                args = {
-                                    "sync_permissions": True,
-                                    "topic": self.bot.layout.replace_str(
-                                        chan.topic or "",
-                                        name=chan_name,
-                                        label=name
-                                    ) if chan.topic else ""
-                                }
-
-                                if chan.overwrites:
+                                if chan.overwrites and c.overwrites != chan.overwrites.construct(
+                                        ctx.guild.default_role,
+                                        role,
+                                        hod
+                                ):
                                     args["overwrites"] = chan.overwrites.construct(
                                         ctx.guild.default_role,
                                         role,
                                         hod
                                     )
-
-                                await c.edit(
-                                    **args,
-                                )
+                                
+                                if chan.topic and c.topic != self.bot.layout.replace_str(
+                                        chan.topic,
+                                        name=chan_name,
+                                        label=name
+                                ):
+                                    args["topic"] = self.bot.layout.replace_str(
+                                        chan.topic,
+                                        name=chan_name,
+                                        label=name
+                                    )
+                                
+                                if args:
+                                    # Edit permissions
+                                    msgs_to_send.append(f"=> Editing permissions for text channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
+                                    await c.edit(
+                                        **args | {
+                                            "sync_permissions": True,
+                                        },
+                                    )
 
                                 if chan.message:
                                     # Check if message is already sent
-                                    if not c.last_message or c.last_message.content != self.bot.layout.replace_str(
+
+                                    msg = [msg async for msg in c.history(limit=1)]
+
+                                    if len(msg) == 0 or msg[0].content.strip() != self.bot.layout.replace_str(
                                         chan.message,
                                         name=chan_name,
                                         label=name
-                                    ):
+                                    ).strip():
+                                        logging.info(f"""{msg[0].content}, {self.bot.layout.replace_str(
+                                            chan.message,
+                                            name=chan_name,
+                                            label=name
+                                        )}""")
+
                                         # Bulk delete messages if there are any
-                                        await ctx.send(f"=> Recreating message for {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
+                                        msgs_to_send.append(f"=> Recreating message for {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
                                         await c.purge(limit=100)
 
                                         await c.send(self.bot.layout.replace_str(
@@ -345,7 +366,7 @@ class Server(commands.Cog):
                             ))
 
                             if not cv:
-                                await ctx.send(f"=> Creating non-existent voice channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
+                                msgs_to_send.append(f"=> Creating non-existent voice channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
 
                                 cv = await ctx.guild.create_voice_channel(
                                     self.bot.layout.replace_str(
@@ -365,20 +386,29 @@ class Server(commands.Cog):
                             else:
                                 args_v = {}
 
-                                args_v["sync_permissions"] = True
-
-                                if chan.overwrites:
+                                if chan.overwrites and cv.overwrites != chan.overwrites.construct(
+                                        ctx.guild.default_role,
+                                        role,
+                                        hod
+                                ):
                                     args_v["overwrites"] = chan.overwrites.construct(
                                         ctx.guild.default_role,
                                         role,
                                         hod
                                     )
 
-                                await cv.edit(
-                                    **args_v
-                                )
+                                if args_v:
+                                    # Edit permissions
+                                    msgs_to_send.append(f"=> Editing permissions for voice channel {self.bot.layout.replace_str(chan.name, name=chan_name, label=name)}")
+                                    await cv.edit(
+                                        **args_v | {
+                                            "sync_permissions": True,
+                                        }
+                                    )
 
                                 chans_covered.append(cv.id)
+
+            await ctx.send("\n".join(msgs_to_send))
                 
         await ctx.send("**Step 3: Deleting unexpected channels**")
 
@@ -386,6 +416,8 @@ class Server(commands.Cog):
             if channel.category and channel.category.name in cat_names and channel.id not in chans_covered:
                 await ctx.send(f"=> Deleting unexpected channel {channel.name}")
                 await channel.delete(reason="Unexpected channel") 
+
+        await ctx.send("**Done!**")
 
 async def setup(bot: Vivum):
     await bot.add_cog(Server(bot))
