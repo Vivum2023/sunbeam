@@ -37,3 +37,9 @@ protected_roles = [
     "l'ordinateur",
     "vc"
 ]
+
+protected_cats = [
+    "information",
+    "general",
+    "admin"
+]

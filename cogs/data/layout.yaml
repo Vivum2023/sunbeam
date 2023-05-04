@@ -63,6 +63,7 @@ categories:
 
       - name: $name-input
         type: text
+        topic: "Inter-department communication and feedback channel for the '$label' department"
         overwrites:
           everyone:
             read_messages: true
