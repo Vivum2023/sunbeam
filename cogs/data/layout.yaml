@@ -19,14 +19,23 @@ categories:
       everyone:
         read_messages: true
         send_messages: false
+        create_public_threads: false
+        create_private_threads: false
+        send_messages_in_threads: false
         connect: false
       hod:
         read_messages: true
         send_messages: false
+        create_public_threads: false
+        create_private_threads: false
+        send_messages_in_threads: false
         connect: false
       dept:
         read_messages: true
         send_messages: true
+        create_public_threads: true
+        create_private_threads: true
+        send_messages_in_threads: true
         connect: true
     channels:
       - name: in-$name
@@ -38,6 +47,10 @@ categories:
           dept:
             read_messages: true
             send_messages: false
+            create_public_threads: false
+            create_private_threads: false
+            send_messages_in_threads: false
+            add_reactions: false
         message: |
           If you can see this channel, it means that you are a part of the '$label' department!
                   
@@ -52,6 +65,7 @@ categories:
           dept:
             read_messages: true
             send_messages: false
+            send_messages_in_threads: true
           hod:
             send_messages: true
 

@@ -240,22 +240,27 @@ class Server(commands.Cog):
                 else:
                     msgs_to_send.append(f"=> Found existing category {self.bot.layout.replace_str(cat_dat.name, name=chan_name, label=name)}")
 
-                    ov = cat_dat.overwrites.construct(
+                    args = {}
+                    if cat_dat.overwrites and cat.overwrites != cat_dat.overwrites.construct(
                         ctx.guild.default_role,
                         role,
                         hod
-                    ) if cat_dat.overwrites else {}
-
-
-                    logging.info(f"Overwrites: {ov}")
-
-                    await cat.edit(
-                        overwrites=cat_dat.overwrites.construct(
-                            ctx.guild.default_role,
-                            role,
-                            hod
-                        ) if cat_dat.overwrites else {}
+                    ):
+                        args["overwrites"] = cat_dat.overwrites.construct(
+                        ctx.guild.default_role,
+                        role,
+                        hod
                     )
+
+                    if args:
+                        msgs_to_send.append(f"=> Updating permissions for category {self.bot.layout.replace_str(cat_dat.name, name=chan_name, label=name)}")
+                        await cat.edit(
+                            overwrites=cat_dat.overwrites.construct(
+                                ctx.guild.default_role,
+                                role,
+                                hod
+                            ) if cat_dat.overwrites else {}
+                        )
 
                 for chan in cat_dat.channels:
                     # Look for channel
